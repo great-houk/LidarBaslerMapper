@@ -1,0 +1,12 @@
+{
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/tyler/LidarBaslerMapper/target",
+            "binaryPath": "/home/tyler/LidarBaslerMapper/target/main",
+            "binaryArgs": []
+        }
+    ],
+    "files.associations": {
+        "ostream": "cpp"
+    },
+}
