@@ -1,9 +1,10 @@
 #include <iostream>
 #include "basler.h"
+#include "image_chunk.h"
 
 int main()
 {
-    int run_ret = run();
+    int run_ret = get_chunk();
 
     if (run_ret == 0)
     {
