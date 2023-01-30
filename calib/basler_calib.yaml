@@ -1,15 +1,15 @@
 # Data path. adjust them!
 common:
-    image_file: "/home/tyler/LidarBaslerMapper/calib/1.png"
-    pcd_file: "/home/tyler/LidarBaslerMapper/calib/1.pcd"
-    result_file: "/home/tyler/LidarBaslerMapper/calib/extrinsic.txt"
+  image_file: "/home/tyler/CLionProjects/LidarBaslerMapper/calib/basler_calib.png"
+  pcd_file: "/home/tyler/CLionProjects/LidarBaslerMapper/calib/lidar_calib.pcd"
+  result_file: "/home/tyler/CLionProjects/LidarBaslerMapper/calib/extrinsic.txt"
 # Camera Parameters
 camera:
-    camera_matrix: [938.997639, 0.000000, 395.294746,
-                    0.000000, 939.609343, 390.285660,
-                    0.000000, 0.000000, 1.000000]
-    dist_coeffs: [-0.327104, 0.286377, 0.000012, 0.000218, -0.413556]
+  camera_matrix: [ 938.997639, 0.000000, 395.294746,
+                   0.000000, 939.609343, 390.285660,
+                   0.000000, 0.000000, 1.000000 ]
+  dist_coeffs: [ -0.327104, 0.286377, 0.000012, 0.000218, -0.413556 ]
 # Calibration Parameters.
 calib:
-    calib_config_file: "/home/tyler/LidarBaslerMapper/calib/config.yaml"
-    use_rough_calib: true # set true if your initial_extrinsic is bad
+  calib_config_file: "/home/tyler/CLionProjects/LidarBaslerMapper/calib/config.yaml"
+  use_rough_calib: true # set true if your initial_extrinsic is bad

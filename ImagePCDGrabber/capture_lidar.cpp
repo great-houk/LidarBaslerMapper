@@ -10,7 +10,7 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in
+// pylon5The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
@@ -29,7 +29,7 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 
-const uint16_t SECONDS = 5;
+const uint16_t SECONDS = 15;
 
 typedef enum {
     kDeviceStateDisconnect = 0,
@@ -79,13 +79,19 @@ void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void 
 //        uint64_t cur_timestamp = *((uint64_t *) (data->timestamp));
         if (data->data_type == kCartesian) {
             auto points = (LivoxRawPoint *) data->data;
-            for(int i = 0; i < data_num; i++) {
+            for (int i = 0; i < data_num; i++) {
                 auto p = points[i];
                 // Filter null points?
-                if(p.x == 0 && p.y == 0 && p.z == 0 && p.reflectivity == 0) {
+                if (p.x == 0 && p.y == 0 && p.z == 0 && p.reflectivity == 0) {
                     return;
                 }
-                cloud.push_back(pcl::PointXYZI(float(p.x), float(p.y), float(p.z), float(p.reflectivity)));
+                pcl::PointXYZI pt;
+                const float div = 150.0;
+                pt.x = float(p.x) / div;
+                pt.y = float(p.y) / div;
+                pt.z = float(p.z) / div;
+                pt.intensity = float(p.reflectivity);
+                cloud.push_back(pt);
             }
         } else if (data->data_type == kSpherical) {
             return;
@@ -247,7 +253,7 @@ int capture_lidar() {
     }
     printf("Start discovering device.\n");
 
-    sleep(10);
+    sleep(SECONDS);
 
     int i = 0;
     for (i = 0; i < kMaxLidarCount; ++i) {
