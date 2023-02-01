@@ -17,7 +17,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 find_package(Pylon QUIET)
 if (NOT ${Pylon_FOUND})
-    include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindPylon.cmake")
+    include("../FindPylon.cmake")
 endif()
 include_directories(${Pylon_INCLUDE_DIRS})
 link_directories(${Pylon_LIBRARY_DIRS})

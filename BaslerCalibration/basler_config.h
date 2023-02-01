@@ -80,7 +80,7 @@ public:
         CFloatParameter(nodemap, "ExposureTime").SetValue(EXPOSURE_TIME_US);
 
         // Set Pixel Format
-        CEnumParameter(nodemap, "PixelFormat").SetValue("RGB8");
+        CEnumParameter(nodemap, "PixelFormat").SetValue("BGR8");
 
         // Set FPS
         CBooleanParameter(nodemap, "AcquisitionFrameRateEnable").SetValue(true);

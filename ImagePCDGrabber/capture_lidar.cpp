@@ -30,6 +30,7 @@
 #include <pcl/io/pcd_io.h>
 
 const uint16_t SECONDS = 15;
+const float DIV = 150.0;
 
 typedef enum {
     kDeviceStateDisconnect = 0,
@@ -86,10 +87,10 @@ void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void 
                     return;
                 }
                 pcl::PointXYZI pt;
-                const float div = 150.0;
-                pt.x = float(p.x) / div;
-                pt.y = float(p.y) / div;
-                pt.z = float(p.z) / div;
+                // Idk why, but the calibration likes small scales
+                pt.x = float(p.x) / DIV;
+                pt.y = float(p.y) / DIV;
+                pt.z = float(p.z) / DIV;
                 pt.intensity = float(p.reflectivity);
                 cloud.push_back(pt);
             }
@@ -113,6 +114,7 @@ void OnSampleCallback(livox_status status, uint8_t handle, uint8_t response, voi
 
 /** Callback function of stopping sampling. */
 void OnStopSampleCallback(livox_status status, uint8_t handle, uint8_t response, void *data) {
+    printf("Stopping sampling...");
 }
 
 /** Query the firmware version of Livox LiDAR. */

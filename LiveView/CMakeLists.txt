@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.24)
-project(Mapper)
+project(LiveView)
 
-add_compile_definitions(MAPPER_DIR=\"${Mapper_SOURCE_DIR}\")
+add_compile_definitions(VIEW_DIR=\"${LiveView_SOURCE_DIR}\")
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -11,6 +11,14 @@ link_directories(${OpenCV_LIBRARY_DIRS})
 add_definitions(${OpenCV_DEFINITIONS})
 
 link_directories(~/Livox-SDK/build/sdk_core/)
+
+find_package(Pylon QUIET)
+if (NOT ${Pylon_FOUND})
+    include("../FindPylon.cmake")
+endif ()
+include_directories(${Pylon_INCLUDE_DIRS})
+link_directories(${Pylon_LIBRARY_DIRS})
+add_definitions(${Pylon_DEFINITIONS})
 
 include(FetchContent)
 FetchContent_Declare(
@@ -35,9 +43,10 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_executable(Mapper main.cpp)
+add_executable(LiveView main.cpp)
 
-target_link_libraries(Mapper ${OpenCV_LIBRARIES})
-target_link_libraries(Mapper ${PCL_LIBRARIES})
-target_link_libraries(Mapper yaml-cpp)
-target_link_libraries(Mapper liblivox_sdk_static.a)
+target_link_libraries(LiveView ${OpenCV_LIBRARIES})
+target_link_libraries(LiveView ${PCL_LIBRARIES})
+target_link_libraries(LiveView ${Pylon_LIBRARIES})
+target_link_libraries(LiveView yaml-cpp)
+target_link_libraries(LiveView liblivox_sdk_static.a)
