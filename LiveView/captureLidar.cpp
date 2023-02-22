@@ -28,9 +28,11 @@
 #include "livox_sdk.h"
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
+#include "../BaslerCalibration/basler_config.h"
 
-const uint16_t SECONDS = 60;
-const float DIV = 250.0;
+//
+// Created by tyler on 2/2/23.
+//
 
 typedef enum {
     kDeviceStateDisconnect = 0,
@@ -44,8 +46,20 @@ typedef struct {
     DeviceInfo info;
 } DeviceItem;
 
+typedef struct {
+    cv::Mat camMat;
+    cv::Mat distCoeffs;
+    cv::Mat trans;
+    cv::Mat rot;
+} CalibData;
+
 DeviceItem devices[kMaxLidarCount];
-pcl::PointCloud<pcl::PointXYZI> cloud;
+cv::Mat _dep;
+CalibData *CDATA;
+
+cv::Mat &getDepths() {
+    return _dep;
+}
 
 /** Connect all the broadcast device. */
 int lidar_count = 0;
@@ -75,25 +89,12 @@ void OnLidarErrorStatusCallback(livox_status status, uint8_t handle, ErrorMessag
 
 /** Receiving point cloud data from Livox LiDAR. */
 void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void *client_data) {
-    if (data) {
+    if (data && data_num > 0) {
         /** Parsing the timestamp and the point cloud data. */
-//        uint64_t cur_timestamp = *((uint64_t *) (data->timestamp));
+        std::cout << data_num << std::endl;
         if (data->data_type == kCartesian) {
             auto points = (LivoxRawPoint *) data->data;
-            for (int i = 0; i < data_num; i++) {
-                auto p = points[i];
-                // Filter null points?
-                if (p.x == 0 && p.y == 0 && p.z == 0 && p.reflectivity == 0) {
-                    return;
-                }
-                pcl::PointXYZI pt;
-                // Idk why, but the calibration likes small scales
-                pt.x = float(p.x) / DIV;
-                pt.y = float(p.y) / DIV;
-                pt.z = float(p.z) / DIV;
-                pt.intensity = float(p.reflectivity);
-                cloud.push_back(pt);
-            }
+            project_points_livox(points, data_num, CDATA->trans, CDATA->rot, CDATA->camMat, CDATA->distCoeffs, _dep);
         } else if (data->data_type == kSpherical) {
             return;
         }
@@ -222,17 +223,16 @@ void OnDeviceBroadcast(const BroadcastDeviceInfo *info) {
     }
 }
 
-int capture_lidar() {
-    printf("Reserving point cloud\n");
-    cloud = pcl::PointCloud<pcl::PointXYZI>();
-    cloud.reserve(SECONDS * 100000);
-
+int start_lidar_capture(CalibData *cdata) {
     printf("Livox SDK initializing.\n");
 /** Initialize Livox-SDK. */
     if (!Init()) {
         return -1;
     }
     printf("Livox SDK has been initialized.\n");
+
+    CDATA = cdata;
+    _dep = cv::Mat::zeros(AOI_HEIGHT, AOI_WIDTH, CV_64FC3);
 
     LivoxSdkVersion sdkVersion;
     GetLivoxSdkVersion(&sdkVersion);
@@ -255,8 +255,10 @@ int capture_lidar() {
     }
     printf("Start discovering device.\n");
 
-    sleep(SECONDS);
+    return 0;
+}
 
+int stop_lidar_capture() {
     int i = 0;
     for (i = 0; i < kMaxLidarCount; ++i) {
         if (devices[i].device_state == kDeviceStateSampling) {
@@ -267,11 +269,6 @@ int capture_lidar() {
 
 /** Uninitialized Livox-SDK. */
     Uninit();
-
-    // Write PCD file
-    printf("Starting PCD write...\n");
-
-    pcl::io::savePCDFile(MAIN_DIR"/calib/lidar_calib.pcd", cloud, true);
 
     printf("Done!\n");
     return 0;

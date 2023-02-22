@@ -20,7 +20,7 @@ void project_points_pcl(const pcl::PointCloud<pcl::PointXYZI>::Ptr &lidar_cloud,
     // project 3d-points into image view
     std::vector<cv::Point2d> pts_2d;
     projectPoints(pts_3d, rvec, tvec, camera_mat, distCoeffs, pts_2d);
-    // Write depths to matrix
+    // Write _dep to matrix
     cv::Mat projected_depths = cv::Mat::zeros(height, width, CV_64FC3);
     for (size_t i = 0; i < pts_2d.size(); i++) {
         cv::Point2d p2d = pts_2d[i];
@@ -45,7 +45,7 @@ void project_points_pcl(const pcl::PointCloud<pcl::PointXYZI>::Ptr &lidar_cloud,
     }
 }
 
-void project_points_livox(const LivoxRawPoint *points, const int size, cv::Mat &tvec, cv::Mat &rvec, cv::Mat &camera_mat, cv::Mat &distCoeffs, cv::Mat &output) {
+void project_points_livox(const LivoxRawPoint *points, const size_t size, cv::Mat &tvec, cv::Mat &rvec, cv::Mat &camera_mat, cv::Mat &distCoeffs, cv::Mat &output) {
     // Transform the point cloud into a format opencv can handle.
     std::vector<cv::Point3d> pts_3d;
     int width = output.cols;
@@ -56,11 +56,14 @@ void project_points_livox(const LivoxRawPoint *points, const int size, cv::Mat &
             pts_3d.emplace_back(double(p.x) / DIV, double(p.y) / DIV, double(p.z) / DIV);
         }
     }
+    if(pts_3d.empty()) {
+        return;
+    }
     // project 3d-points into image view
     std::vector<cv::Point2d> pts_2d;
     projectPoints(pts_3d, rvec, tvec, camera_mat, distCoeffs, pts_2d);
-    // Write depths to matrix
-    cv::Mat projected_depths = cv::Mat::zeros(height, width, CV_64FC3);
+    // Write _dep to matrix
+    cv::Mat projected_points = cv::Mat::zeros(height, width, CV_64FC3);
     for (size_t i = 0; i < pts_2d.size(); i++) {
         cv::Point2d p2d = pts_2d[i];
         cv::Point3d p3d = pts_3d[i];
@@ -68,17 +71,17 @@ void project_points_livox(const LivoxRawPoint *points, const int size, cv::Mat &
         int row = (int) round(p2d.y);
 
         if (col > 0 && col < width && row > 0 && row < height) {
-            auto p = projected_depths.at<cv::Vec3d>(row, col);
+            auto p = projected_points.at<cv::Vec3d>(row, col);
             if (norm(p3d) > norm(p)) {
-                *projected_depths.ptr<cv::Vec3d>(row, col) = p3d;
+                *projected_points.ptr<cv::Vec3d>(row, col) = p3d;
             }
         }
     }
     // Copy depth map over to return value
     for (int j = 0; j < height; j++) {
         for (int i = 0; i < width; i++) {
-            if (projected_depths.at<cv::Vec3d>(j, i) != cv::Vec3d::zeros()) {
-                *output.ptr<cv::Vec3d>(j, i) = projected_depths.at<cv::Vec3d>(j, i);
+            if (projected_points.at<cv::Vec3d>(j, i) != cv::Vec3d::zeros()) {
+                *output.ptr<cv::Vec3d>(j, i) = projected_points.at<cv::Vec3d>(j, i);
             }
         }
     }

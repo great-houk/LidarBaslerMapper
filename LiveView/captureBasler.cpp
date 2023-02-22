@@ -16,6 +16,7 @@ volatile bool LOCK = false;
 class ImageGrabHandler : public CImageEventHandler {
 public:
     void OnImageGrabbed(CInstantCamera & /*camera*/, const CGrabResultPtr &ptrGrabResult) override {
+        while(LOCK) {};
         LOCK = true;
         image.AttachGrabResultBuffer(ptrGrabResult);
         imageMat = cv::Mat((int)image.GetHeight(), (int)image.GetWidth(), CV_8UC3, (uint8_t*)image.GetBuffer());
@@ -63,10 +64,12 @@ public:
         }
     }
 
-    static cv::Mat &getMat() {
+    static cv::Mat getMat() {
         // Wait for the lock to release
         while(LOCK) {}
-
-        return imageMat;
+        LOCK = true;
+        auto clone = imageMat.clone();
+        LOCK = false;
+        return clone;
     }
 };

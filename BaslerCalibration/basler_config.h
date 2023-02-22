@@ -1,5 +1,9 @@
 // Include files to use the pylon API.
+#pragma once
 #include <pylon/PylonIncludes.h>
+
+const int AOI_WIDTH = 800;
+const int AOI_HEIGHT = 800;
 
 // Namespace for using pylon objects.
 using namespace Pylon;
@@ -14,7 +18,7 @@ public:
 
         // Disable all trigger types except the trigger type used for triggering the acquisition of
         // frames.
-        if(trigger) {
+        if (trigger) {
             // Get required enumerations.
             CEnumParameter triggerSelector(nodemap, "TriggerSelector");
             CEnumParameter triggerMode(nodemap, "TriggerMode");
@@ -68,8 +72,6 @@ public:
         CEnumParameter(nodemap, "AcquisitionMode").SetValue("Continuous");
 
         // Set AOI
-        const int AOI_WIDTH = 800;
-        const int AOI_HEIGHT = 800;
         CIntegerParameter(nodemap, "Width").SetValue(AOI_WIDTH, IntegerValueCorrection_Nearest);
         CIntegerParameter(nodemap, "Height").SetValue(AOI_HEIGHT, IntegerValueCorrection_Nearest);
         CCommandParameter(nodemap, "BslCenterX").Execute();

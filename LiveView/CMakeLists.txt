@@ -5,6 +5,9 @@ add_compile_definitions(VIEW_DIR=\"${LiveView_SOURCE_DIR}\")
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(${OpenCV_LIBRARY_DIRS})
@@ -45,6 +48,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_executable(LiveView main.cpp)
 
+target_link_libraries(LiveView Threads::Threads)
 target_link_libraries(LiveView ${OpenCV_LIBRARIES})
 target_link_libraries(LiveView ${PCL_LIBRARIES})
 target_link_libraries(LiveView ${Pylon_LIBRARIES})
