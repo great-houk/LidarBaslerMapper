@@ -94,8 +94,24 @@ void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void 
                 pt.intensity = float(p.reflectivity);
                 cloud.push_back(pt);
             }
-        } else if (data->data_type == kSpherical) {
-            return;
+        } else if (data->data_type == kExtendCartesian) {
+            auto points = (LivoxExtendRawPoint *) data->data;
+            for (int i = 0; i < data_num; i++) {
+                auto p = points[i];
+                // Filter null points?
+                if (p.x == 0 && p.y == 0 && p.z == 0 && p.reflectivity == 0) {
+                    return;
+                }
+                pcl::PointXYZI pt;
+                // Idk why, but the calibration likes small scales
+                pt.x = float(p.x) / DIV;
+                pt.y = float(p.y) / DIV;
+                pt.z = float(p.z) / DIV;
+                pt.intensity = float(p.reflectivity);
+                cloud.push_back(pt);
+            }
+        } else {
+            throw -5;
         }
     }
 }
@@ -150,6 +166,8 @@ void LidarStateChange(const DeviceInfo *info) {
     devices[handle].info = *info;
 }
 
+void pointCloudReturnModeCb(livox_status, uint8_t, uint8_t, void *) {}
+
 /** Callback function of changing of device state. */
 void OnDeviceInfoChange(const DeviceInfo *info, DeviceEvent type) {
     if (info == nullptr) {
@@ -180,6 +198,8 @@ void OnDeviceInfoChange(const DeviceInfo *info, DeviceEvent type) {
         }
         printf("Device feature %d\n", devices[handle].info.feature);
         SetErrorMessageCallback(handle, OnLidarErrorStatusCallback);
+        auto res = LidarSetPointCloudReturnMode(handle, kFirstReturn, pointCloudReturnModeCb, nullptr);
+        printf("Result: %d\n", res);
         if (devices[handle].info.state == kLidarStateNormal) {
             LidarStartSampling(handle, OnSampleCallback, nullptr);
             devices[handle].device_state = kDeviceStateSampling;
@@ -270,6 +290,8 @@ int capture_lidar() {
 
     // Write PCD file
     printf("Starting PCD write...\n");
+
+    printf("Captured %zu points\n", cloud.size());
 
     pcl::io::savePCDFile(MAIN_DIR"/calib/lidar_calib.pcd", cloud, true);
 

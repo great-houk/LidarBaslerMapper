@@ -1,7 +1,11 @@
+#ifndef PROJECT_POINTS
+#define PROJECT_POINTS
+
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 #include "opencv2/calib3d.hpp"
 #include "livox_sdk.h"
+#include "../CaptureLidarBuffered/LidarCapture.h"
 
 const double MIN_INTENSITY = 5.0;
 const float DIV = 150.0;
@@ -20,7 +24,7 @@ void project_points_pcl(const pcl::PointCloud<pcl::PointXYZI>::Ptr &lidar_cloud,
     // project 3d-points into image view
     std::vector<cv::Point2d> pts_2d;
     projectPoints(pts_3d, rvec, tvec, camera_mat, distCoeffs, pts_2d);
-    // Write _dep to matrix
+    // Write _lidarDepths to matrix
     cv::Mat projected_depths = cv::Mat::zeros(height, width, CV_64FC3);
     for (size_t i = 0; i < pts_2d.size(); i++) {
         cv::Point2d p2d = pts_2d[i];
@@ -45,15 +49,15 @@ void project_points_pcl(const pcl::PointCloud<pcl::PointXYZI>::Ptr &lidar_cloud,
     }
 }
 
-void project_points_livox(const LivoxRawPoint *points, const size_t size, cv::Mat &tvec, cv::Mat &rvec, cv::Mat &camera_mat, cv::Mat &distCoeffs, cv::Mat &output) {
+template <typename T>
+void project_points_livox(const T *points, const size_t size, cv::Mat &tvec, cv::Mat &rvec, cv::Mat &camera_mat, cv::Mat &distCoeffs, lidarPoint *buffer, size_t buffer_size, char &bufferInd, int &position) {
     // Transform the point cloud into a format opencv can handle.
     std::vector<cv::Point3d> pts_3d;
-    int width = output.cols;
-    int height = output.rows;
+    pts_3d.reserve(size);
     for (size_t i = 0; i < size; i++) {
         auto p = points[i];
         if (p.reflectivity > MIN_INTENSITY) {
-            pts_3d.emplace_back(double(p.x) / DIV, double(p.y) / DIV, double(p.z) / DIV);
+            pts_3d.emplace_back(p.x / DIV, p.y / DIV, p.z / DIV);
         }
     }
     if(pts_3d.empty()) {
@@ -62,29 +66,23 @@ void project_points_livox(const LivoxRawPoint *points, const size_t size, cv::Ma
     // project 3d-points into image view
     std::vector<cv::Point2d> pts_2d;
     projectPoints(pts_3d, rvec, tvec, camera_mat, distCoeffs, pts_2d);
-    // Write _dep to matrix
-    cv::Mat projected_points = cv::Mat::zeros(height, width, CV_64FC3);
-    for (size_t i = 0; i < pts_2d.size(); i++) {
+    // Write _lidarDepths to matrix
+    for (int i = 0; i < pts_2d.size(); i++) {
         cv::Point2d p2d = pts_2d[i];
-        cv::Point3d p3d = pts_3d[i];
-        int col = (int) round(p2d.x);
-        int row = (int) round(p2d.y);
+        auto x = round(p2d.x);
+        auto y = round(p2d.y);
 
-        if (col > 0 && col < width && row > 0 && row < height) {
-            auto p = projected_points.at<cv::Vec3d>(row, col);
-            if (norm(p3d) > norm(p)) {
-                *projected_points.ptr<cv::Vec3d>(row, col) = p3d;
-            }
+        if(position + i >= buffer_size) {
+            bufferInd += 1;
+            bufferInd %= 2;
+            position = -i;
         }
+
+        buffer[bufferInd * buffer_size + position + i] = {
+                (float)x, (float)y, (float)pts_3d[i].x, (float)pts_3d[i].y, (float)pts_3d[i].z
+        };
     }
-    // Copy depth map over to return value
-    for (int j = 0; j < height; j++) {
-        for (int i = 0; i < width; i++) {
-            if (projected_points.at<cv::Vec3d>(j, i) != cv::Vec3d::zeros()) {
-                *output.ptr<cv::Vec3d>(j, i) = projected_points.at<cv::Vec3d>(j, i);
-            }
-        }
-    }
+    position += (int)pts_2d.size();
 }
 
 void mapTurbo(double v, double vmin, double vmax, uint8_t &r, uint8_t &g, uint8_t &b) {
@@ -140,3 +138,5 @@ cv::Mat getProjectionImg(const cv::Mat &image, cv::Mat &tvec, cv::Mat &rvec, cv:
     merge_img = 0.8 * map_img + 0.5 * image;
     return merge_img;
 }
+
+#endif

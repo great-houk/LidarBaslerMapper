@@ -46,7 +46,7 @@ include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_executable(LiveView main.cpp)
+add_executable(LiveView main.cpp ../CaptureLidarBuffered/LidarCapture.cpp)
 
 target_link_libraries(LiveView Threads::Threads)
 target_link_libraries(LiveView ${OpenCV_LIBRARIES})

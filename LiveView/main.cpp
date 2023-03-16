@@ -1,9 +1,9 @@
-#include "../Mapper/loadCalib.cpp"
-#include "../Mapper/projectPoints.cpp"
-#include "captureBasler.cpp"
-#include "captureLidar.cpp"
-#include "opencv2/opencv.hpp"
 #include <iostream>
+#include <pcl/io/pcd_io.h>
+#include "opencv2/opencv.hpp"
+#include "captureBasler.cpp"
+#include "../Mapper/loadCalib.cpp"
+#include "../CaptureLidarBuffered/LidarCapture.h"
 
 using namespace std;
 using namespace cv;
@@ -37,7 +37,7 @@ int main() {
     grabber.startGrabbing();
 
     // Start capturing lidar
-    start_lidar_capture(&cdata);
+    LidarCapture::start(&cdata);
 
     // Project points and get output image
     namedWindow(WINNAME, WINDOW_NORMAL);
@@ -54,69 +54,21 @@ int main() {
         }
 
         // Draw image
-        Mat depths = getDepths().clone();
-        Mat clipped = Mat::zeros(AOI_HEIGHT, AOI_WIDTH, CV_8UC3);
-        for(int j = 0; j < AOI_HEIGHT; j++) {
-            for(int i = 0; i < AOI_WIDTH; i++) {
-                // Find first non-zero pos
-                auto pos = depths.at<Vec<double, 3>>(j, i);
-                if(pos == Vec<double, 3>(0.0, 0.0, 0.0)) {
-                    for(int d = 1; d < 5; d++) {
-                        for(int x = -d; x <= d; x++) {
-                            // Check top
-                            int i2 = i + x, j2 = j + d;
-                            if(i2 < AOI_WIDTH && i2 > 0 && j2 < AOI_HEIGHT && j2 > 0) {
-                                auto p = depths.at<Vec<double, 3>>(j2, i2);
-                                if(p != Vec<double, 3>(0.0, 0.0, 0.0)) {
-                                    pos = p;
-                                    d = 100;
-                                    break;
-                                }
-                            }
-                            // Check right
-                            i2 = i + d, j2 = j + x;
-                            if(i2 < AOI_WIDTH && i2 > 0 && j2 < AOI_HEIGHT && j2 > 0) {
-                                auto p = depths.at<Vec<double, 3>>(j2, i2);
-                                if(p != Vec<double, 3>(0.0, 0.0, 0.0)) {
-                                    pos = p;
-                                    d = 100;
-                                    break;
-                                }
-                            }
-                            // Check bottom
-                            i2 = i + x, j2 = j - d;
-                            if(i2 < AOI_WIDTH && i2 > 0 && j2 < AOI_HEIGHT && j2 > 0) {
-                                auto p = depths.at<Vec<double, 3>>(j2, i2);
-                                if(p != Vec<double, 3>(0.0, 0.0, 0.0)) {
-                                    pos = p;
-                                    d = 100;
-                                    break;
-                                }
-                            }
-                            // Check left
-                            i2 = i - d, j2 = j + x;
-                            if(i2 < AOI_WIDTH && i2 > 0 && j2 < AOI_HEIGHT && j2 > 0) {
-                                auto p = depths.at<Vec<double, 3>>(j2, i2);
-                                if(p != Vec<double, 3>(0.0, 0.0, 0.0)) {
-                                    pos = p;
-                                    d = 100;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
+        auto depths = LidarCapture::get_raw_data();
+        for(int i = 0; i < BUFFER_SIZE; i++) {
+            // Find first non-zero pos
+            auto &pos = depths[i];
 
-                auto depth2 = pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2];
-                if(depth2 > depth * depth - range * range && depth2 < depth * depth + range * range) {
-                    *clipped.ptr<Vec<char, 3>>(j, i) = mat.at<Vec<char, 3>>(j, i);
-                }
+            if(pos.px > 0 && pos.px < AOI_WIDTH && pos.py > 0 && pos.py < AOI_HEIGHT) {
+                int x = (int)pos.px;
+                int y = (int)pos.py;
+
+                mat.at<Vec3b>(x, y) = Vec3b(255, 0, 0);
             }
         }
-        imshow(WINNAME, clipped);
+
+        imshow(WINNAME, mat);
     }
 
-    stop_lidar_capture();
-
-    return 0;
+    return LidarCapture::stop();
 }
