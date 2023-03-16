@@ -35,7 +35,7 @@ class LidarCapture {
 public:
     static int start(CalibData *cdata);
     static int stop();
-    static sphereCenter findSphere(int px, int py, int pr);
+    static sphereCenter findSphere(float px, float py, float r);
     static lidarPoint *get_raw_data();
 };
 

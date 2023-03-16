@@ -31,6 +31,60 @@ lidarPoint *LidarCapture::get_raw_data() {
     return &lidarDepths[otherBufferInd * BUFFER_SIZE];
 }
 
+sphereCenter LidarCapture::findSphere(float cx, float cy, float r) {
+    float r2 = r * r;
+    int foundCount = 0;
+    lidarPoint foundPoints[2] = {};
+
+    while (true) {
+        bool found = false;
+        auto buffer = LidarCapture::get_raw_data();
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            auto px = buffer[i].px;
+            auto px2 = px * px;
+            auto py = buffer[i].py;
+            auto py2 = py * py;
+            if (px2 + py2 < r2) {
+                foundPoints[foundCount] = buffer[i];
+                foundCount++;
+                if (foundCount == 2) {
+                    found = true;
+                }
+            }
+        }
+        // Wait until new buffer
+        if (!found) { while (buffer == LidarCapture::get_raw_data()) { buffer = buffer; }}
+        else { break; }
+    }
+    float px1, px2, py1, py2, pz1, pz2, pd2, x1, x2, y1, y2, z1, z2, d2, scalingRatio, centerX, centerY, centerZ, radius;
+    px1 = foundPoints[0].px - cx;
+    px2 = foundPoints[1].px - cx;
+    py1 = foundPoints[0].py - cy;
+    py2 = foundPoints[1].py - cy;
+    pz1 = sqrtf(r2 - px1 * px1 - py1 * py1);
+    pz2 = sqrtf(r2 - px2 * px2 - py2 * py2);
+    pd2 = (px1 - px2) * (px1 - px2) + (py1 - py2) * (py1 - py2) + (pz1 - pz2) * (pz1 - pz2);
+    x1 = foundPoints[0].x;
+    x2 = foundPoints[1].x;
+    y1 = foundPoints[0].y;
+    y2 = foundPoints[1].y;
+    z1 = foundPoints[0].z;
+    z2 = foundPoints[1].z;
+    d2 = (x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2) + (z1 - z2) * (z1 - z2);
+    scalingRatio = sqrtf(d2 / pd2);
+
+    centerX = x1 - px1 * scalingRatio;
+    centerY = y1 - py1 * scalingRatio;
+    centerZ = z1 - pz1 * scalingRatio;
+    radius = r * scalingRatio;
+    return sphereCenter{
+            centerX,
+            centerY,
+            centerZ,
+            radius
+    };
+}
+
 /** Connect all the broadcast device. */
 int lidar_count = 0;
 char broadcast_code_list[kMaxLidarCount][kBroadcastCodeSize];
