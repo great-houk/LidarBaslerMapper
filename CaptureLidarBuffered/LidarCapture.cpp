@@ -41,9 +41,9 @@ sphereCenter LidarCapture::findSphere(float cx, float cy, float r) {
         bool found = false;
         auto buffer = LidarCapture::get_raw_data();
         for (int i = 0; i < BUFFER_SIZE; i++) {
-            auto px = buffer[i].px;
+            auto px = buffer[i].px - cx;
             auto px2 = px * px;
-            auto py = buffer[i].py;
+            auto py = buffer[i].py - cy;
             auto py2 = py * py;
             if (px2 + py2 < r2) {
                 foundPoints[foundCount] = buffer[i];
