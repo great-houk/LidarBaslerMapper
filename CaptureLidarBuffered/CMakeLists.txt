@@ -33,7 +33,7 @@ add_definitions(${PCL_DEFINITIONS})
 
 add_subdirectory(pybind11)
 pybind11_add_module(pymapper SHARED LidarCapture.cpp py-mapper.cpp)
-set_target_properties(pymapper PROPERTIES LIBRARY_OUTPUT_DIRECTORY "../pymapper/")
+set_target_properties(pymapper PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/pymapper/")
 
 target_link_libraries(pymapper PRIVATE Threads::Threads)
 target_link_libraries(pymapper PRIVATE ${OpenCV_LIBRARIES})

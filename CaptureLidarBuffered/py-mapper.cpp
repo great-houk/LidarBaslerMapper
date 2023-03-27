@@ -18,4 +18,12 @@ PYBIND11_MODULE(pymapper, m) {
             .def("__repr__", [](const sphereCenter& s){
                 return "sphereCenter {\n\tx: " + std::to_string(s.x) + "\n\ty: " + std::to_string(s.y) + "\n\tz: " + std::to_string(s.z) + "\n\tr: " + std::to_string(s.r) + "\n}";
             });
+
+    py::class_<point3d>(m, "point3d")
+            .def_readonly("x", &point3d::x)
+            .def_readonly("y", &point3d::y)
+            .def_readonly("z", &point3d::z)
+            .def("__repr__", [](const point3d& s){
+                return "point3d {\n\tx: " + std::to_string(s.x) + "\n\ty: " + std::to_string(s.y) + "\n\tz: " + std::to_string(s.z) + "\n}";
+            });
 }

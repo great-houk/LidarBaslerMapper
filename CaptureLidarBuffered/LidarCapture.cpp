@@ -32,7 +32,7 @@ lidarPoint *LidarCapture::get_raw_data() {
     return &lidarDepths[otherBufferInd * BUFFER_SIZE];
 }
 
-sphereCenter LidarCapture::estimate_distance(float cx, float cy, float sx, float sy) {
+point3d LidarCapture::estimate_distance(float cx, float cy, float sx, float sy) {
     float sumX = 0, sumY = 0, sumZ = 0, count = 0; 
 
     while (count == 0) {
@@ -52,11 +52,10 @@ sphereCenter LidarCapture::estimate_distance(float cx, float cy, float sx, float
         }
     }
     
-    return sphereCenter{
+    return point3d {
             sumX / count,
             sumY / count,
             sumZ / count,
-            radius
     };
 }
 

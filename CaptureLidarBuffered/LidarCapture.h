@@ -31,12 +31,19 @@ typedef struct {
     float r;
 } sphereCenter;
 
+typedef struct {
+    float x;
+    float y;
+    float z;
+} point3d;
+
 class LidarCapture {
 public:
     static int start(CalibData *cdata);
     static int init();
     static int stop();
     static sphereCenter findSphere(float px, float py, float r);
+    static point3d estimate_distance(float px, float py, float sx, float sy);
     static lidarPoint *get_raw_data();
 };
 

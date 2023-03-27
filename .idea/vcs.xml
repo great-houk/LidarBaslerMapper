@@ -3,7 +3,5 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/CaptureLidarBuffered/pybind11" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-debug/_deps/yaml-cpp-src" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/cmake-build-release/_deps/yaml-cpp-src" vcs="Git" />
   </component>
 </project>
