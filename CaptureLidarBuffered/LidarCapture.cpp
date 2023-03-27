@@ -6,7 +6,8 @@
 #include "livox_sdk.h"
 #include "../BaslerCalibration/basler_config.h"
 #include "LidarCapture.h"
-#include "../Mapper/projectPoints.cpp"
+#include "../Mapper/projectPoints.h"
+#include "../Mapper/loadCalib.h"
 
 typedef enum {
     kDeviceStateDisconnect = 0,
@@ -49,12 +50,14 @@ sphereCenter LidarCapture::findSphere(float cx, float cy, float r) {
                 foundCount++;
                 if (foundCount == 2) {
                     found = true;
+                    break;
                 }
             }
         }
         // Wait until new buffer
-        if (!found) { while (buffer == LidarCapture::get_raw_data()) { buffer = buffer; }}
-        else { break; }
+//        if (!found) { while (buffer == LidarCapture::get_raw_data()) {}}
+//        else { break; }
+        break;
     }
     float px1, px2, py1, py2, pz1, pz2, pd2, x1, x2, y1, y2, z1, z2, d2, scalingRatio, centerX, centerY, centerZ, radius;
     px1 = foundPoints[0].px - cx;
@@ -117,10 +120,10 @@ void GetLidarData(uint8_t handle, LivoxEthPacket *data, uint32_t data_num, void 
         /** Parsing the timestamp and the point cloud data. */
         if (data->data_type == kCartesian) {
             auto points = (LivoxRawPoint *) data->data;
-            project_points_livox(points, data_num, CDATA->trans, CDATA->rot, CDATA->camMat, CDATA->distCoeffs, lidarDepths, BUFFER_SIZE, bufferInd, bufferPosition);
+            Projector::project_points_livox(points, data_num, CDATA->trans, CDATA->rot, CDATA->camMat, CDATA->distCoeffs, lidarDepths, BUFFER_SIZE, bufferInd, bufferPosition);
         } else if (data->data_type == kExtendCartesian) {
             auto points = (LivoxExtendRawPoint *) data->data;
-            project_points_livox(points, data_num, CDATA->trans, CDATA->rot, CDATA->camMat, CDATA->distCoeffs, lidarDepths, BUFFER_SIZE, bufferInd, bufferPosition);
+            Projector::project_points_livox(points, data_num, CDATA->trans, CDATA->rot, CDATA->camMat, CDATA->distCoeffs, lidarDepths, BUFFER_SIZE, bufferInd, bufferPosition);
         } else if (data->data_type == kSpherical) {
             return;
         }
@@ -247,6 +250,16 @@ void OnDeviceBroadcast(const BroadcastDeviceInfo *info) {
         devices[handle].handle = handle;
         devices[handle].device_state = kDeviceStateDisconnect;
     }
+}
+
+int LidarCapture::init() {
+    cv::Mat camMat, distCoeffs, trans, rot;
+    loadCalib(camMat, distCoeffs, trans, rot);
+    CalibData cdata {
+        camMat, distCoeffs, trans, rot
+    };
+
+    return LidarCapture::start(&cdata);
 }
 
 int LidarCapture::start(CalibData *cdata) {

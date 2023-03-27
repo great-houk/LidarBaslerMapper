@@ -7,7 +7,7 @@
 
 #include "opencv2/opencv.hpp"
 
-const size_t BUFFER_SIZE = 100 * /* Milliseconds -> */ 100;
+const size_t BUFFER_SIZE = 100 * /* Milliseconds -> */ 10;
 
 typedef struct {
     cv::Mat camMat;
@@ -34,6 +34,7 @@ typedef struct {
 class LidarCapture {
 public:
     static int start(CalibData *cdata);
+    static int init();
     static int stop();
     static sphereCenter findSphere(float px, float py, float r);
     static lidarPoint *get_raw_data();

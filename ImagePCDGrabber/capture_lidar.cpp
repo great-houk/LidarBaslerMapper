@@ -29,7 +29,7 @@
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
 
-const uint16_t SECONDS = 60;
+const uint16_t SECONDS = 15;
 const float DIV = 250.0;
 
 typedef enum {

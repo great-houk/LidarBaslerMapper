@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(LiveView)
-
-add_compile_definitions(VIEW_DIR=\"${LiveView_SOURCE_DIR}\")
+project(LidarBuffered)
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -23,34 +21,28 @@ include_directories(${Pylon_INCLUDE_DIRS})
 link_directories(${Pylon_LIBRARY_DIRS})
 add_definitions(${Pylon_DEFINITIONS})
 
-include(FetchContent)
-FetchContent_Declare(
-		yaml-cpp
-		GIT_REPOSITORY https://github.com/jbeder/yaml-cpp.git
-		GIT_SHALLOW	ON
-		GIT_TAG yaml-cpp-0.6.3
-	)
-FetchContent_GetProperties(yaml-cpp)
-if(NOT yaml-cpp_POPULATED)
-	message(STATUS "Populating yaml-cpp...")
-	FetchContent_Populate(yaml-cpp)
-	# Add here options for yaml-cpp building
-	set(YAML_CPP_BUILD_TESTS OFF)
-	add_subdirectory(${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR})
-	message(STATUS "Done.")
-endif()
-include_directories(BEFORE SYSTEM ${yaml-cpp_SOURCE_DIR} ${yaml-cpp_BINARY_DIR}/include)
+find_package(yaml-cpp REQUIRED)
+include_directories(${yaml-cpp_INCLUDE_DIRS})
+link_directories(${yaml-cpp_LIBRARY_DIRS})
+add_definitions(${yaml-cpp_DEFINITIONS})
 
 find_package(PCL REQUIRED COMPONENTS common io)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_executable(LiveView main.cpp)
+add_subdirectory(pybind11)
+pybind11_add_module(pymapper SHARED LidarCapture.cpp py-mapper.cpp)
 
-target_link_libraries(LiveView Threads::Threads)
-target_link_libraries(LiveView ${OpenCV_LIBRARIES})
-target_link_libraries(LiveView ${PCL_LIBRARIES})
-target_link_libraries(LiveView ${Pylon_LIBRARIES})
-target_link_libraries(LiveView yaml-cpp)
-target_link_libraries(LiveView liblivox_sdk_static.a)
+target_link_libraries(pymapper PRIVATE Threads::Threads)
+target_link_libraries(pymapper PRIVATE ${OpenCV_LIBRARIES})
+target_link_libraries(pymapper PRIVATE ${PCL_LIBRARIES})
+target_link_libraries(pymapper PRIVATE ${Pylon_LIBRARIES})
+target_link_libraries(pymapper PRIVATE yaml-cpp)
+set_target_properties(pymapper PROPERTIES POSITION_INDEPENDENT_CODE TRUE)
+target_link_libraries(pymapper PRIVATE liblivox_sdk_static.a)
+
+# EXAMPLE_VERSION_INFO is defined by setup.py and passed into the C++ code as a
+# define (VERSION_INFO) here.
+target_compile_definitions(pymapper
+                           PRIVATE VERSION_INFO=0.1)

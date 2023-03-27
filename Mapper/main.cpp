@@ -1,5 +1,5 @@
-#include "loadCalib.cpp"
-#include "projectPoints.cpp"
+#include "loadCalib.h"
+#include "projectPoints.h"
 #include "opencv2/opencv.hpp"
 #include <pcl/point_types.h>
 #include <pcl/io/pcd_io.h>
@@ -32,7 +32,7 @@ int main() {
     std::cout << "Loaded image" << std::endl;
 
     // Project points and get output image
-    Mat init_img = getProjectionImg(image, trans, rot, camMat, distCoeffs, cloud);
+    Mat init_img = Projector::getProjectionImg(image, trans, rot, camMat, distCoeffs, cloud);
     auto winname = "Projected Points";
     namedWindow(winname, WINDOW_NORMAL);
     resizeWindow(winname, 2000, 2000);
