@@ -7,6 +7,8 @@ PYBIND11_MODULE(pymapper, m) {
     m.def("start", &LidarCapture::init);
     m.def("stop", &LidarCapture::stop);
     m.def("find_sphere", &LidarCapture::findSphere);
+    
+    m.def("test", &[const std::string &s] { std::cout << s << std::endl; });
 
     py::class_<sphereCenter>(m, "sphereCenter")
             .def_readonly("x", &sphereCenter::x)
