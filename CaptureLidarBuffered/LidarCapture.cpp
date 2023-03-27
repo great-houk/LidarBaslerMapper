@@ -32,6 +32,34 @@ lidarPoint *LidarCapture::get_raw_data() {
     return &lidarDepths[otherBufferInd * BUFFER_SIZE];
 }
 
+sphereCenter LidarCapture::estimate_distance(float cx, float cy, float sx, float sy) {
+    float sumX = 0, sumY = 0, sumZ = 0, count = 0; 
+
+    while (count == 0) {
+        auto buffer = LidarCapture::get_raw_data();
+        for (int i = 0; i < BUFFER_SIZE; i++) {
+            auto px = buffer[i].px;
+            auto py = buffer[i].py;
+            auto x = buffer[i].x;
+            auto y = buffer[i].y;
+            auto z = buffer[i].z;
+            if (abs(px - cx) < sx && abs(py - cy) < sy) {
+                sumX += x;
+                sumY += y;
+                sumZ += z;
+                count += 1;
+            }
+        }
+    }
+    
+    return sphereCenter{
+            sumX / count,
+            sumY / count,
+            sumZ / count,
+            radius
+    };
+}
+
 sphereCenter LidarCapture::findSphere(float cx, float cy, float r) {
     float r2 = r * r;
     int foundCount = 0;
