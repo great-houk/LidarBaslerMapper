@@ -7,6 +7,7 @@ PYBIND11_MODULE(pymapper, m) {
     m.def("start", &LidarCapture::init);
     m.def("stop", &LidarCapture::stop);
     m.def("find_sphere", &LidarCapture::findSphere);
+    m.def("estimate_distance", &LidarCapture::estimate_distance);
     
     m.def("test", [](const std::string &s) { std::cout << s << std::endl; });
 
